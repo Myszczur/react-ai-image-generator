@@ -1,7 +1,12 @@
 import "./App.css";
+import ImageGenerator from "./components/imageGenerator/ImageGenerator";
 
 function App() {
-  return <div></div>;
+  return (
+    <>
+      <ImageGenerator />
+    </>
+  );
 }
 
 export default App;
