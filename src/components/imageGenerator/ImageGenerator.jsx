@@ -4,6 +4,7 @@ import startImage from "../assets/medium.svg";
 
 function ImageGenerator() {
   const [imageURL, setImageURL] = useState("/");
+  const [loading, setLoading] = useState(false);
 
   let inputRef = useRef(null);
 
@@ -11,24 +12,40 @@ function ImageGenerator() {
     if (inputRef.current.value === "") {
       return 0;
     }
+    setLoading(true);
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const API_URL = "https://api.openai.com/v1/images/generations";
+    const BEARER_TOKEN = process.env.OPENAI_API_KEY;
+    const requestOptions = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization:
-          "Barer ...",
-        "User-Agent": "Chrome",
+        Authorization: `Bearer ${BEARER_TOKEN}`,
       },
       body: JSON.stringify({
         prompt: `${inputRef.current.value}`,
         n: 1,
         size: "512x512",
       }),
-    });
-    let data = await response.json();
-    let dataArray = data.data;
-    setImageURL(dataArray[0].url);
+    };
+
+    try {
+      const response = await fetch(API_URL, requestOptions);
+      if (!response.ok) {
+        throw new Error("Request failed!");
+      }
+      const data = await response.json();
+      const dataArray = data.data;
+      if (dataArray && dataArray.length > 0) {
+        setImageURL(dataArray[0].url);
+      } else {
+        throw new Error("No image URL found in the response data.");
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Błąd zapytania:", error);
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,8 +61,10 @@ function ImageGenerator() {
           />
         </div>
         <div className="loading">
-          <div className="loading-bar"></div>
-          <div className="loading-text">Loading...</div>
+          <div className={loading ? "loading-bar-full" : "loading-bar"}></div>
+          <div className={loading ? "loading-text" : "display-none"}>
+            Loading...
+          </div>
         </div>
       </div>
       <div className="search-box">
@@ -55,12 +74,7 @@ function ImageGenerator() {
           className="search-input"
           placeholder="Describe what you want to see..."
         />
-        <div
-          className="generate-btn"
-          onClick={() => {
-            imageGenerator();
-          }}
-        >
+        <div className="generate-btn" onClick={imageGenerator}>
           Generate
         </div>
       </div>
